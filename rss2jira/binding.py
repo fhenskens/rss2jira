@@ -18,6 +18,7 @@ class BindingFactory(object):
         self.jira_projectKey = config.get("jira_projectKey")
         self.jira_issuetypeName = config.get("jira_issuetypeName")
         self.jira_assignee = config.get("jira_assignee")
+        self.jira_custom_fields = config.get("jira_custom_fields")
 
     def make_filter(self, source_keywords):
         keywords = set(self.global_keywords + source_keywords)
@@ -39,7 +40,8 @@ class BindingFactory(object):
                 password=self.get_config(config_entry, 'jira_password'),
                 projectKey=self.get_config(config_entry, 'jira_projectKey'),
                 issuetypeName=self.get_config(config_entry, 'jira_issuetypeName'),
-                assignee=self.get_config(config_entry, 'jira_assignee'))
+                assignee=self.get_config(config_entry, 'jira_assignee'),
+                customFields=self.get_config(config_entry, 'jira_custom_fields'))
 
         storage = self.tracked_entries.source_view(name)
 
