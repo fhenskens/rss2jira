@@ -12,6 +12,12 @@ class BindingFactory(object):
         self.tracked_entries = tracked_entries
         self.rss_reader_class = rss_reader_class
         self.issue_creator_class = issue_creator_class
+        self.jira_url = config.get("jira_url")
+        self.jira_username = config.get("jira_username")
+        self.jira_password = config.get("jira_password")
+        self.jira_projectKey = config.get("jira_projectKey")
+        self.jira_issuetypeName = config.get("jira_issuetypeName")
+        self.jira_assignee = config.get("jira_assignee")
 
     def make_filter(self, source_keywords):
         keywords = set(self.global_keywords + source_keywords)
@@ -28,17 +34,19 @@ class BindingFactory(object):
 
         issue_creator = self.issue_creator_class(
                 name=config_entry['name'],
-                url=config_entry['jira_url'],
-                username=config_entry['jira_username'],
-                password=config_entry['jira_password'],
-                projectKey=config_entry['jira_projectKey'],
-                issuetypeName=config_entry['jira_issuetypeName'],
-                assignee=config_entry['jira_assignee'])
+                url=self.get_config(config_entry, 'jira_url'),
+                username=self.get_config(config_entry, 'jira_username'),
+                password=self.get_config(config_entry, 'jira_password'),
+                projectKey=self.get_config(config_entry, 'jira_projectKey'),
+                issuetypeName=self.get_config(config_entry, 'jira_issuetypeName'),
+                assignee=self.get_config(config_entry, 'jira_assignee'))
 
         storage = self.tracked_entries.source_view(name)
 
         return Binding(name, rss_reader, issue_creator, storage)
 
+    def get_config(self, config_entry, key):
+        return config_entry[key] if key in config_entry else getattr(self, key)
 
 class Binding(object):
     def __init__(self, name, rss_reader, issue_creator, tracked_entries):
