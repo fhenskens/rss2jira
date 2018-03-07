@@ -10,7 +10,7 @@ setup(
     author_email='iam@nnutter.com',
     url='https://github.com/nnutter/rss2jira',
     packages=['rss2jira'],
-    install_requires=['PyYAML==3.10', 'feedparser==5.1.2', 'jira==1.0.14', 'jira-python==0.2.2', 'requests==0.14.2', 'python-dateutil<2'],
+    install_requires=['PyYAML==3.10', 'feedparser==5.1.2', 'jira-python==0.2.2', 'jira==1.0.14', 'requests==2.18.4', 'python-dateutil<2'],
     scripts=['bin/rss2jira'],
     include_package_data=True,
     license='BSD',
