@@ -1,6 +1,7 @@
 PyYAML==3.10
 feedparser==5.1.2
 ipython==0.13
+jira>=1.0.14
 jira-python==0.2.2
 python-magic==0.4.2
 requests==0.14.2
