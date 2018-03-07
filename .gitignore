@@ -8,6 +8,8 @@
 !/bin/rss2jira
 !/bin/rss2jira-email-report
 /rss2jira.conf
+/rss2jira.db
+/setup.cfg
 
 *.pyc
 rss2jira.sqlite

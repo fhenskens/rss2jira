@@ -1,6 +1,7 @@
 import re
 import logging
 from rssreader import RssReader
+import json
 
 class BindingFactory(object):
     def __init__(self, config, tracked_entries, rss_reader_class,
@@ -57,7 +58,8 @@ class Binding(object):
 
         new_entries = []
         for e in entries:
-            if e.id not in self.tracked_entries:
+            entryId = self._getId(e)
+            if entryId not in self.tracked_entries:
                 new_entries.append(e)
             else:
                 self.logger.debug('Entry is tracked, skipping. ({})'.format(
@@ -67,5 +69,9 @@ class Binding(object):
 
         for e in new_entries:
             self.issue_creator.create_issue(e)
-            self.tracked_entries.add(e.id)
+            self.tracked_entries.add(self._getId(e))
             self.logger.debug('Tracking new entry. ({})'.format(e.title.encode('ascii', 'replace')))
+    def _getId(self, entry):
+        if hasattr(entry, "id"):
+            return entry.id
+        return entry.title + "@" + entry.published
