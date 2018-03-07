@@ -32,7 +32,8 @@ class BindingFactory(object):
                 username=config_entry['jira_username'],
                 password=config_entry['jira_password'],
                 projectKey=config_entry['jira_projectKey'],
-                issuetypeName=config_entry['jira_issuetypeName'])
+                issuetypeName=config_entry['jira_issuetypeName'],
+                assignee=config_entry['jira_assignee'])
 
         storage = self.tracked_entries.source_view(name)
 

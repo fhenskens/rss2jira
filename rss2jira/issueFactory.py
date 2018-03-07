@@ -6,7 +6,7 @@ from pprint import pformat
 
 class JiraWrapper(object):
 
-    def __init__(self, name, url, username, password, projectKey, issuetypeName):
+    def __init__(self, name, url, username, password, projectKey, issuetypeName, assignee):
 
         self.name = name
         self.url = url
@@ -15,6 +15,7 @@ class JiraWrapper(object):
         self.projectKey = projectKey
         self.issuetypeName = issuetypeName
         self.logger = logging.getLogger("rss2jira")
+        self.assignee = assignee
 
         self.options = {
             'server': url,
@@ -37,9 +38,11 @@ class JiraWrapper(object):
         self.logger.info("Authentication result: {} {}".format(rv.status_code, rv.text))
 
     def _issue_dict(self, entry):
-        return {'project': {'key': self.projectKey}, 'summary': entry.title,
+        return {'project': {'key': self.projectKey},
+                'summary': entry.title,
                 'description': "Go to {} ({}).".format(self.name, entry.link),
-                'issuetype': {'name': self.issuetypeName}}
+                'issuetype': {'name': self.issuetypeName},
+                'assignee': {'name': self.assignee}}
 
     def create_issue(self, entry):
         fields = self._issue_dict(entry)
@@ -50,4 +53,3 @@ class JiraWrapper(object):
                 "Reauthenticating and trying again... %s", ex)
             self._authenticate()
             return self.jira.create_issue(fields=fields)
-
