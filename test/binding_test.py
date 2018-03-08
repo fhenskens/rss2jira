@@ -84,7 +84,7 @@ class TestBindingFactory(unittest.TestCase):
                 issuetypeName="jira_type1")
 
         bindings[1].issue_creator.assert_called_once_with(
-                action=None
+                action=None,
                 assignee=None,
                 customFields={},
                 username="jira_user2",
