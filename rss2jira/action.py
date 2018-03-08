@@ -25,7 +25,6 @@ class Action(object):
         params = definition["params"] if "params" in definition else None
         self.logger.debug("Performing action _{}".format(action))
         output = getattr(self, '_{}'.format(action))(data, params)
-        self._update()
         self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition) )
         if "outputActions" not in definition:
             self.logger.debug("No output actions found under " + action)
@@ -88,6 +87,7 @@ class Action(object):
 
     def _register(self, data, params):
         self.variables[params["var"]] = data
+        self._update()
 
     def _re(self, data, params):
         p = re.compile(params["find"], re.DOTALL)
