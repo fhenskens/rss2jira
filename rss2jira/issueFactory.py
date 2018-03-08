@@ -2,11 +2,11 @@ import logging
 from requests.auth import HTTPBasicAuth
 from jira.client import JIRA
 from pprint import pformat
-
+from action import Action
 
 class JiraWrapper(object):
 
-    def __init__(self, name, url, username, password, projectKey, issuetypeName, assignee, customFields):
+    def __init__(self, name, url, username, password, projectKey, issuetypeName, assignee, customFields, action):
 
         self.name = name
         self.url = url
@@ -17,6 +17,7 @@ class JiraWrapper(object):
         self.logger = logging.getLogger("rss2jira")
         self.assignee = assignee
         self.customFields = customFields
+        self.action = Action( action )
 
         self.options = {
             'server': url,
@@ -39,13 +40,17 @@ class JiraWrapper(object):
         self.logger.info("Authentication result: {} {}".format(rv.status_code, rv.text))
 
     def _issue_dict(self, entry):
+        resolvedFields = self._resolve_action( entry )
         return dict(
                 {'project': {'key': self.projectKey},
                     'summary': entry.title,
-                    'description': "Go to {} ({}).".format(self.name, entry.link),
+                    'description': "Go to {} ({}).".format(self.name, entry.link) + "\r\n\r\n" + self.action.result,
                     'issuetype': {'name': self.issuetypeName},
                     'assignee': {'name': self.assignee}},
-                **self.customFields)
+                **resolvedFields)
+
+    def _resolve_action( self, entry ):
+        return self.action.apply( entry.link, self.customFields )
 
     def create_issue(self, entry):
         fields = self._issue_dict(entry)

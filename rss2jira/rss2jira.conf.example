@@ -6,24 +6,74 @@ jira_password: 'Abides'
 jira_projectKey: 'BST'
 jira_issuetypeName: 'Epic'
 sources:
-    - name: 'BioStars'
-      feed_url: 'http://biostars.org/feeds/latest'
-    - name: 'SEQanswers'
-      feed_url: 'http://seqanswers.com/forums/external.php?type=RSS2'
-      jira_url: 'https://otherjira.gsc.wustl.edu'
-      jira_username: 'OtherDude'
-      jira_password: 'StillAbides'
-      jira_projectKey: 'OTHER'
-      jira_issuetypeName: 'Bowling'
-      jira_assignee: 'Donny'
-      jira_custom_fields:
-          customfield_10000: 'I am the walrus'
-          customfield_10001: 'Shut up'
+- name: 'BioStars'
+  feed_url: 'http://biostars.org/feeds/latest'
+- name: 'SEQanswers'
+  feed_url: 'http://seqanswers.com/forums/external.php?type=RSS2'
+  jira_url: 'https://otherjira.gsc.wustl.edu'
+  jira_username: 'OtherDude'
+  jira_password: 'StillAbides'
+  jira_projectKey: 'OTHER'
+  jira_issuetypeName: 'Bowling'
+  jira_assignee: 'Donny'
+  jira_custom_fields:
+      customfield_10000: 'I am the walrus'
+      customfield_10001: 'Shut up'
+- name: Splunk Feed
+  feed_url: https://www.splunk.com/page/securityportal/rss
+  jira_custom_fields:
+    customfield_10000: "CVSS Base Score: {{ cvssBaseScore }}"
+  action:
+    type: follow
+    params:
+      method: get
+      kwargs:
+        timeout: 15
+        verify: false
+    outputActions:
+    - type: soup
+      params:
+        element: div
+        kwargs:
+          id: articleColumn
+      outputActions:
+      - type: re
+        params:
+          find: "(.*)"
+          replace: "{noformat}\\1"
+        outputActions:
+        - type: resultAppend
+    - type: soup
+      params:
+        element: div
+        kwargs:
+          class_: securityEvent
+      outputActions:
+      - type: re
+        params:
+          find: "(.*)"
+          replace: "\\r\\n\\1{noformat}"
+        outputActions:
+        - type: resultAppend
+    - type: soup
+      params:
+        element: table
+        kwargs:
+          class_: "cvss"
+      outputActions:
+      - type: re
+        params:
+          find: .*CVSS Base Score\s*([\d\.]+).*
+          replace: \1
+        outputActions:
+        - type: register
+          params:
+            var: cvssBaseScore
 keywords:
-    - 'breakdancer'
-    - 'ibwa'
-    - 'joinx'
-    - 'music'
-    - 'refcov'
-    - 'somaticsniper'
-    - 'tigra-sv'
+- 'breakdancer'
+- 'ibwa'
+- 'joinx'
+- 'music'
+- 'refcov'
+- 'somaticsniper'
+- 'tigra-sv'
