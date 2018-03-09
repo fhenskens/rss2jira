@@ -20,6 +20,7 @@ class BindingFactory(object):
         self.jira_assignee = config.get("jira_assignee")
         self.jira_custom_fields = config.get("jira_custom_fields") if "jira_custom_fields" in config else dict()
         self.action = config.get("action")
+        self.email = config.get("email")
 
     def make_filter(self, source_keywords):
         keywords = set(self.global_keywords + source_keywords)

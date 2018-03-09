@@ -53,6 +53,7 @@ class JiraWrapper(object):
         try:
             return self.action.apply( entry.link, self.customFields )
         except Exception as e:
+            self.logger.exception( "Link : " + entry.link + ", with JIRA data: " + str(self.customFields) )
             raise e
 
     def create_issue(self, entry):

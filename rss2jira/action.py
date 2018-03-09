@@ -24,25 +24,32 @@ class Action(object):
         action = definition["type"]
         params = definition["params"] if "params" in definition else None
         self.logger.debug("Performing action _{}".format(action))
-        output = getattr(self, '_{}'.format(action))(data, params)
-        if "outputActions" not in definition:
-            self.logger.debug("No output actions found under " + action)
-            return
-        for outputAction in definition["outputActions"]:
-            try:
+        try:
+            output = getattr(self, '_{}'.format(action))(data, params)
+            if "outputActions" not in definition:
+                self.logger.debug("No output actions found under " + action)
+                return
+            for outputAction in definition["outputActions"]:
                 self._apply(output, outputAction)
-            except:
-                self.logger.exception( "Error applying action: " + str(outputAction) )
+        except Exception as e:
+            self.logger.debug("Exception caught in action: " + str(definition))
+            if "exceptActions" in definition:
+                self.logger.debug("Except action found.")
+                for exceptAction in definition["exceptActions"]:
+                    self._apply(data, exceptAction)
+            else:
+                self.logger.exception("Exception encountered processing action " + str(definition))
+                raise e
 
     def _update(self):
-        self.logger.debug( "Updating dictionaries. Variables: " + str(self.variables))
+        self.logger.debug("Updating dictionaries. Variables: " + str(self.variables))
         for varKey, varVal in self.variables.items():
             p = re.compile("{{\s*" + varKey + "\s*}}")
             self._replaceDict(p, varVal, self.jiraData)
             self._replaceDict(p, varVal, self.definition)
 
     def _updateVal(self, var, val):
-        self.logger.debug( "Updating dictionaries. Variable: " + var + "=" + str(val))
+        self.logger.debug("Updating dictionaries. Variable: " + var + "=" + str(val))
         p = re.compile("{{\s*" + var + "\s*}}")
         self._replaceDict(p, val, self.jiraData)
         self._replaceDict(p, val, self.definition)
@@ -80,16 +87,16 @@ class Action(object):
     def _follow(self, data, params):
         if not hasattr(self, "session"):
             self.session = requests.Session()
-        self.logger.debug( "Performing _{}".format(params['method']) )
+        self.logger.debug("Performing _{}".format(params['method']))
         output = self._getBody(getattr(self, '_{}'.format(params['method']))(data, params))
         return output
 
-    def _getBody(self, response ):
-        if isinstance( response, requests.models.Response ):
-            return response.content.decode( 'utf-8', errors="ignore" )
-        if isinstance( response, list ):
+    def _getBody(self, response):
+        if isinstance(response, requests.models.Response):
+            return response.content.decode('utf-8', errors="ignore")
+        if isinstance(response, list):
             return '[%s]' % ', '.join(map(str, response))
-        if isinstance( response, str ):
+        if isinstance(response, str):
             return response
 
     def _get(self, url, params):
@@ -98,13 +105,14 @@ class Action(object):
     def _post(self, url, params):
         return self.session.post(url, **params['kwargs'])
 
-    def _float(self, data, params ):
+    def _float(self, data, params):
         return float(data)
 
     def _register(self, data, params):
-        self.variables[params["var"]] = data
+        val = params["val"] if "val" in params else data
+        self.variables[params["var"]] = val
         self._update()
-        self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition) )
+        self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition))
 
     def _re(self, data, params):
         p = re.compile(params["find"], re.DOTALL)
@@ -114,10 +122,10 @@ class Action(object):
         self.result += data
 
     def _soup(self, data, params):
-        try:
-            soup = BeautifulSoup(data, "html.parser")
-            #self.logger.debug( "Soup: " + soup.prettify() )
-            self.logger.debug( "Soup Params: " + str(params) )
-            return soup.find(params["element"], **params["kwargs"]).get_text()
-        except:
-            return ""
+        soup = BeautifulSoup(data, "html.parser")
+        self.logger.debug("Soup: " + soup.prettify())
+        self.logger.debug("Soup Params: " + str(params))
+        return soup.find(params["element"], **params["kwargs"]).get_text()
+
+    def _pass(self, data, params):
+        pass

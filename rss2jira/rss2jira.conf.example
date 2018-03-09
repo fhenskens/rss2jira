@@ -5,6 +5,11 @@ jira_username: 'TheDude'
 jira_password: 'Abides'
 jira_projectKey: 'BST'
 jira_issuetypeName: 'Epic'
+email:
+  smtp: smtp.lebowsk.io
+  from: the.rug@lebowsk.io
+  to:
+  - the.dude@lebowsk.io
 sources:
 - name: 'BioStars'
   feed_url: 'http://biostars.org/feeds/latest'
@@ -22,7 +27,11 @@ sources:
 - name: Splunk Feed
   feed_url: https://www.splunk.com/page/securityportal/rss
   jira_custom_fields:
-    customfield_10000: "CVSS Base Score: {{ cvssBaseScore }}"
+    customfield_10002: "{{ cvssBaseScore }}"
+    customfield_10003:
+      value: "Other"
+    components:
+    - name: "Splunk"
   action:
     type: follow
     params:
@@ -66,9 +75,16 @@ sources:
           find: .*CVSS Base Score\s*([\d\.]+).*
           replace: \1
         outputActions:
-        - type: register
-          params:
-            var: cvssBaseScore
+          - type: float
+            outputActions:
+            - type: register
+              params:
+                var: cvssBaseScore
+      exceptActions:
+      - type: register
+        params:
+          var: cvssBaseScore
+          val: 11
 keywords:
 - 'breakdancer'
 - 'ibwa'

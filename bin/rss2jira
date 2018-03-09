@@ -8,8 +8,8 @@ import sys
 import yaml
 from rss2jira import Sqlite3TrackedEntries, BindingFactory, RssReader, MainLoop
 from rss2jira import JiraWrapper
-
-
+import smtplib
+from email.mime.text import MIMEText
 
 class StreamToLogger(object):
     """
@@ -88,16 +88,39 @@ def main():
     configure_logging(args)
 
     app_config = yaml.load(open(args.config))
-    storage = Sqlite3TrackedEntries(app_config['db_path'])
-    if args.reset_db:
-        storage.clear()
+    try:
+        storage = Sqlite3TrackedEntries(app_config['db_path'])
+        if args.reset_db:
+            storage.clear()
 
-    binding_factory = BindingFactory(app_config, storage, RssReader,
-            JiraWrapper)
+        binding_factory = BindingFactory(app_config, storage, RssReader,
+                JiraWrapper)
 
-    main_loop = MainLoop(app_config, binding_factory, args.sleep,
-            stop_condition=lambda: False)
-    main_loop.run()
+        main_loop = MainLoop(app_config, binding_factory, args.sleep,
+                stop_condition=lambda: False)
+        main_loop.run()
+    except Exception as e:
+        if "email" in app_config:
+            email = app_config.get("email")
+            smtp = email["smtp"]
+            mailFrom = email["from"]
+            mailTo = email["to"]
+            sendMail(smtp, mailFrom, mailTo, "rss2jira encountered error", "Stack trace: \r\n\r\n{}".format(e))
+        else:
+            print "No email settings configured."
+        raise e
+
+def sendMail(smtp, mailFrom, mailTo, subject, body):
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = mailFrom
+        msg['To'] = ", ".join(mailTo)
+        s = smtplib.SMTP(smtp)
+        s.sendmail(mailFrom, mailTo, msg.as_string())
+        s.quit()
+    except Exception as e:
+        pass
 
 if __name__ == "__main__":
     main()
