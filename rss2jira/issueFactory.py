@@ -50,7 +50,10 @@ class JiraWrapper(object):
                 **resolvedFields)
 
     def _resolve_action( self, entry ):
-        return self.action.apply( entry.link, self.customFields )
+        try:
+            return self.action.apply( entry.link, self.customFields )
+        except Exception as e:
+            raise e
 
     def create_issue(self, entry):
         fields = self._issue_dict(entry)

@@ -25,12 +25,14 @@ class Action(object):
         params = definition["params"] if "params" in definition else None
         self.logger.debug("Performing action _{}".format(action))
         output = getattr(self, '_{}'.format(action))(data, params)
-        self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition) )
         if "outputActions" not in definition:
             self.logger.debug("No output actions found under " + action)
             return
         for outputAction in definition["outputActions"]:
-            self._apply(output, outputAction)
+            try:
+                self._apply(output, outputAction)
+            except:
+                self.logger.exception( "Error applying action: " + str(outputAction) )
 
     def _update(self):
         self.logger.debug( "Updating dictionaries. Variables: " + str(self.variables))
@@ -38,6 +40,12 @@ class Action(object):
             p = re.compile("{{\s*" + varKey + "\s*}}")
             self._replaceDict(p, varVal, self.jiraData)
             self._replaceDict(p, varVal, self.definition)
+
+    def _updateVal(self, var, val):
+        self.logger.debug( "Updating dictionaries. Variable: " + var + "=" + str(val))
+        p = re.compile("{{\s*" + var + "\s*}}")
+        self._replaceDict(p, val, self.jiraData)
+        self._replaceDict(p, val, self.definition)
 
     def _replaceDict(self, p, replace, dictionary):
         for key, val in dictionary.items():
@@ -51,13 +59,18 @@ class Action(object):
         if obj is None or isinstance(obj, bool) or isinstance(obj, int) or isinstance(obj, float):
             return obj
         elif isinstance(obj, str):
-            return p.sub(replace, obj)
+            if len(p.sub("", obj)) < len(obj):
+                self.logger.debug("Replacing string: " + obj + ". Length of unaltered text: " + str(len(p.sub("", obj))))
+            if not isinstance(replace, str) and len(obj) > 0 and len(p.sub("", obj)) == 0:
+                return replace
+            return p.sub(str(replace), obj)
         elif isinstance(obj, dict):
             return self._replaceDict(p, replace, obj)
         elif isinstance(obj, list):
             return self._replaceList(p, replace, obj)
         elif not isinstance(obj, str):
             raise ValueError("What type is this? " + str(type(obj)) + "=" + str(obj))
+
 
     def _replaceList(self, p, replace, _list):
         for idx, item in enumerate(_list):
@@ -85,9 +98,13 @@ class Action(object):
     def _post(self, url, params):
         return self.session.post(url, **params['kwargs'])
 
+    def _float(self, data, params ):
+        return float(data)
+
     def _register(self, data, params):
         self.variables[params["var"]] = data
         self._update()
+        self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition) )
 
     def _re(self, data, params):
         p = re.compile(params["find"], re.DOTALL)
@@ -97,6 +114,10 @@ class Action(object):
         self.result += data
 
     def _soup(self, data, params):
-        soup = BeautifulSoup(data, "html.parser")
-        self.logger.debug( "Soup: " + str(params) )
-        return soup.find(params["element"], **params["kwargs"]).get_text()
+        try:
+            soup = BeautifulSoup(data, "html.parser")
+            #self.logger.debug( "Soup: " + soup.prettify() )
+            self.logger.debug( "Soup Params: " + str(params) )
+            return soup.find(params["element"], **params["kwargs"]).get_text()
+        except:
+            return ""
