@@ -22,10 +22,9 @@ class Action(object):
 
     def _apply(self, data, definition):
         action = definition["type"]
-        params = definition["params"] if "params" in definition else None
         self.logger.debug("Performing action _{}".format(action))
         try:
-            output = getattr(self, '_{}'.format(action))(data, params)
+            output = getattr(self, '_{}'.format(action))(data, definition)
             if "outputActions" not in definition:
                 self.logger.debug("No output actions found under " + action)
                 return
@@ -84,11 +83,11 @@ class Action(object):
             _list[idx] = self._replaceType(p, replace, item)
         return _list
 
-    def _follow(self, data, params):
+    def _follow(self, data, definition):
         if not hasattr(self, "session"):
             self.session = requests.Session()
-        self.logger.debug("Performing _{}".format(params['method']))
-        output = self._getBody(getattr(self, '_{}'.format(params['method']))(data, params))
+        self.logger.debug("Performing _{}".format(definition['method']))
+        output = self._getBody(getattr(self, '_{}'.format(definition['method']))(data, definition))
         return output
 
     def _getBody(self, response):
@@ -99,33 +98,33 @@ class Action(object):
         if isinstance(response, str):
             return response
 
-    def _get(self, url, params):
-        return self.session.get(url, **params['kwargs'])
+    def _get(self, url, definition):
+        return self.session.get(url, **definition['kwargs'])
 
-    def _post(self, url, params):
-        return self.session.post(url, **params['kwargs'])
+    def _post(self, url, definition):
+        return self.session.post(url, **definition['kwargs'])
 
-    def _float(self, data, params):
+    def _float(self, data, definition):
         return float(data)
 
-    def _register(self, data, params):
-        val = params["val"] if "val" in params else data
-        self.variables[params["var"]] = val
+    def _register(self, data, definition):
+        val = definition["val"] if "val" in definition else data
+        self.variables[definition["var"]] = val
         self._update()
         self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition))
 
-    def _re(self, data, params):
-        p = re.compile(params["find"], re.DOTALL)
-        return p.sub(params["replace"], data)
+    def _re(self, data, definition):
+        p = re.compile(definition["find"], re.DOTALL)
+        return p.sub(definition["replace"], data)
 
-    def _resultAppend(self, data, params):
+    def _resultAppend(self, data, definition):
         self.result += data
 
-    def _soup(self, data, params):
+    def _soup(self, data, definition):
         soup = BeautifulSoup(data, "html.parser")
         self.logger.debug("Soup: " + soup.prettify())
-        self.logger.debug("Soup Params: " + str(params))
-        return soup.find(params["element"], **params["kwargs"]).get_text()
+        self.logger.debug("Soup definition: " + str(definition))
+        return soup.find(definition["element"], **definition["kwargs"]).get_text()
 
-    def _pass(self, data, params):
+    def _pass(self, data, definition):
         pass

@@ -34,57 +34,48 @@ sources:
     - name: "Splunk"
   action:
     type: follow
-    params:
-      method: get
-      kwargs:
-        timeout: 15
-        verify: false
+    method: get
+    kwargs:
+      timeout: 15
+      verify: false
     outputActions:
     - type: soup
-      params:
-        element: div
-        kwargs:
-          id: articleColumn
+      element: div
+      kwargs:
+        id: articleColumn
       outputActions:
       - type: re
-        params:
-          find: "(.*)"
-          replace: "{noformat}\\1"
+        find: "(.*)"
+        replace: "{noformat}\\1"
         outputActions:
         - type: resultAppend
     - type: soup
-      params:
-        element: div
-        kwargs:
-          class_: securityEvent
+      element: div
+      kwargs:
+        class_: securityEvent
       outputActions:
       - type: re
-        params:
-          find: "(.*)"
-          replace: "\\r\\n\\1{noformat}"
+        find: "(.*)"
+        replace: "\\r\\n\\1{noformat}"
         outputActions:
         - type: resultAppend
     - type: soup
-      params:
-        element: table
-        kwargs:
-          class_: "cvss"
+      element: table
+      kwargs:
+        class_: "cvss"
       outputActions:
       - type: re
-        params:
-          find: .*CVSS Base Score\s*([\d\.]+).*
-          replace: \1
+        find: .*CVSS Base Score\s*([\d\.]+).*
+        replace: \1
         outputActions:
           - type: float
             outputActions:
             - type: register
-              params:
-                var: cvssBaseScore
+              var: cvssBaseScore
       exceptActions:
       - type: register
-        params:
-          var: cvssBaseScore
-          val: 11
+        var: cvssBaseScore
+        val: 11
 keywords:
 - 'breakdancer'
 - 'ibwa'
