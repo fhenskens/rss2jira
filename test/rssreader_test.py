@@ -63,13 +63,11 @@ class TestRssReader(unittest.TestCase):
         self.assertEqual("No Title", entries[2].title)
 
     def test_filter(self):
-        should_match = ["title XYZ", "description XYZ", "body XYZ", "XYZ"]
-        for s in should_match:
-            match_re = re.compile(s)
-            reader = RssReader(self.url, keywords=match_re.search)
-            entries = reader.get_entries()
-            self.assertEqual(1, len(entries))
-            self.assertEqual("title XYZ", entries[0].title)
+        keywords = ["title XYZ", "description XYZ", "body XYZ", "XYZ"]
+        reader = RssReader(self.url, keywords=keywords)
+        entries = reader.get_entries()
+        self.assertEqual(1, len(entries))
+        self.assertEqual("title XYZ", entries[0].title)
 
     def test_timeout(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
