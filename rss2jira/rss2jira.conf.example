@@ -22,60 +22,59 @@ sources:
   jira_issuetypeName: 'Bowling'
   jira_assignee: 'Donny'
   jira_custom_fields:
-      customfield_10000: 'I am the walrus'
-      customfield_10001: 'Shut up'
-- name: Splunk Feed
-  feed_url: https://www.splunk.com/page/securityportal/rss
+    customfield_10000: 'I am the walrus'
+    customfield_10001: 'Shut up'
+- name: 'AusCERT Feed'
+  feed_url: 'https://www.auscert.org.au/rss/bulletins/'
+  keywords:
+  - "cisco": networkguy
+    "redhat": osguy
+  - "debian|freebsd|suse|ubuntu|distros_we_dont_use": null
+  - ".*": securityguy
   jira_custom_fields:
-    customfield_10002: "{{ cvssBaseScore }}"
-    customfield_10003:
-      value: "Other"
-    components:
-    - name: "Splunk"
+    customfield_10002: "CVSS Base Score: {{ cvssBaseScore }}, Date: {{ today }}"
   action:
     type: follow
     method: get
     kwargs:
       timeout: 15
-      verify: false
+      verify: False
     outputActions:
     - type: soup
-      element: div
+      element: pre
       kwargs:
-        id: articleColumn
+        class_: bulletin_text
       outputActions:
       - type: re
-        find: "(.*)"
-        replace: "{noformat}\\1"
+        find: (.{0,30000}).*
+        replace: "{noformat}\\1{noformat}"
         outputActions:
         - type: resultAppend
-    - type: soup
-      element: div
-      kwargs:
-        class_: securityEvent
-      outputActions:
       - type: re
-        find: "(.*)"
-        replace: "\\r\\n\\1{noformat}"
+        find: .*Base[^\d]*([\d\.]+).*
+        group: 1
+        default: "11"
         outputActions:
-        - type: resultAppend
-    - type: soup
-      element: table
-      kwargs:
-        class_: "cvss"
+        - type: float
+          outputActions:
+          - type: register
+            var: cvssBaseScore
+    - type: today
       outputActions:
-      - type: re
-        find: .*CVSS Base Score\s*([\d\.]+).*
-        replace: \1
+      - type: str
         outputActions:
-          - type: float
-            outputActions:
-            - type: register
-              var: cvssBaseScore
-      exceptActions:
-      - type: register
-        var: cvssBaseScore
-        val: 11
+        - type: register
+          var: today
+    exceptActions:
+    - type: register
+      var: cvssBaseScore
+      val: 11
+    - type: today
+      outputActions:
+      - type: str
+        outputActions:
+        - type: register
+          var: today
 keywords:
 - 'breakdancer'
 - 'ibwa'

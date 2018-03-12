@@ -18,7 +18,7 @@ def validate_feed(feed):
 
 
 class RssReader(object):
-    def __init__(self, feed_url, keywords, timeout=None):
+    def __init__(self, feed_url, keywords=[".*"], timeout=None):
         self.feed_url = feed_url
         self.keywords = keywords
         self.logger = logging.getLogger("rss2jira")
@@ -27,6 +27,7 @@ class RssReader(object):
 
     def _fetch_all_entries(self):
         try:
+            print "connecting to: " + self.feed_url
             request = urllib2.Request(self.feed_url)
             request.add_header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0")
             opener = urllib2.build_opener()
@@ -59,10 +60,17 @@ class RssReader(object):
         for keywordEntry in self.keywords:
             if isinstance(keywordEntry, str):
                 plainStrings.append(keywordEntry)
+            else:
+                # Dictionary keyword definitions should override plainstring keywords
+                plainStrings = []
+                break
         if len(plainStrings) > 0:
             regex = "|".join(plainStrings)
             self.logger.debug("Plain text match on: " + regex)
-            return re.compile(regex, re.IGNORECASE).search(entryString)
+            return re.compile(regex, re.IGNORECASE).search(entryString) is not None
+        for idx, keyword in enumerate(self.keywords):
+            if not isinstance(keyword, dict):
+                del self.keywords[idx]
         assignee = remap(entryString, self.keywords)
         self.logger.debug("Remap result: " + str(assignee))
         if assignee == None:

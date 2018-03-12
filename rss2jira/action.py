@@ -23,7 +23,7 @@ class Action(object):
             try:
                 self._apply(data, self.definition)
             except Exception as e:
-                self.logger.exception("Exception encountered processing action " + str(definition))
+                self.logger.exception("Exception encountered processing action " + str(self.definition) + "\r\nException: {}".format(e))
                 raise e
         return self.jiraData
 
@@ -33,12 +33,12 @@ class Action(object):
         try:
             output = getattr(self, '_{}'.format(action))(data, definition)
             if "outputActions" not in definition:
-                self.logger.debug("No output actions found under " + action)
+                self.logger.debug("No output actions found under _" + action)
                 return
             for outputAction in definition["outputActions"]:
                 self._apply(output, outputAction)
         except Exception as e:
-            self.logger.debug("Exception caught in action: " + str(definition))
+            self.logger.exception("Exception caught in action: " + str(definition) + "\r\nException: {}".format(e))
             if "exceptActions" in definition:
                 self.logger.debug("Except action found.")
                 for exceptAction in definition["exceptActions"]:
@@ -111,26 +111,43 @@ class Action(object):
         return self.session.post(url, **definition['kwargs'])
 
     def _float(self, data, definition):
+        self.logger.debug("floating data: " + data)
         return float(data)
 
     def _register(self, data, definition):
         val = definition["val"] if "val" in definition else data
         self.variables[definition["var"]] = val
         self._update()
-        self.logger.debug("Post-update:\r\nJira:" + str(self.jiraData) + "\r\nDefinition:" + str(self.definition))
 
     def _re(self, data, definition):
-        p = re.compile(definition["find"], re.DOTALL)
-        return p.sub(definition["replace"], data)
+        if "replace" in definition:
+            p = re.compile(definition["find"], re.DOTALL)
+            self.logger.debug("Performing regex replace")
+            return p.sub(definition["replace"], data)
+        self.logger.debug("Performing regex search")
+        p = re.compile(definition["find"])
+        result = p.search(data)
+        if result is None:
+            if "default" in definition:
+                self.logger.debug("No result found. Returning default: " + definition["default"])
+                return definition["default"]
+            else:
+                self.logger.debug("No result found")
+                return None
+        return result.group(definition["group"])
 
     def _resultAppend(self, data, definition):
+        self.logger.debug("Appending result: " + str(len(data)) + " characters")
         self.result += data
 
     def _soup(self, data, definition):
         soup = BeautifulSoup(data, "html.parser")
-        self.logger.debug("Soup: " + soup.prettify())
+        #self.logger.debug("Soup: " + soup.prettify())
         self.logger.debug("Soup definition: " + str(definition))
         return soup.find(definition["element"], **definition["kwargs"]).get_text()
+
+    def _str(self, data, definition):
+        return str(data)
 
     def _pass(self, data, definition):
         pass

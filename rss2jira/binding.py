@@ -27,7 +27,7 @@ class BindingFactory(object):
 
         rss_reader = self.rss_reader_class(
                 feed_url=config_entry['feed_url'],
-                keywords=self.get_config(config_entry, 'keywords'),
+                keywords=self.keywords + config_entry["keywords"] if "keywords" in config_entry else [],
                 timeout=self.socket_timeout)
 
         issue_creator = self.issue_creator_class(

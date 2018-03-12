@@ -58,19 +58,19 @@ class TestBindingFactory(unittest.TestCase):
 
         self.assertEqual("http://feed_url1", bindings[0].rss_reader.feed_url)
         self.assertEqual(20, bindings[0].rss_reader.timeout)
-        self.assertTrue(bindings[0].rss_reader.accept_filter("cat"))
-        self.assertTrue(bindings[0].rss_reader.accept_filter("pig"))
-        self.assertTrue(bindings[0].rss_reader.accept_filter("frog"))
-        self.assertTrue(bindings[0].rss_reader.accept_filter("kw1"))
-        self.assertFalse(bindings[0].rss_reader.accept_filter("kw2"))
+        self.assertTrue(bindings[0].rss_reader._keyword_match("cat"))
+        self.assertTrue(bindings[0].rss_reader._keyword_match("pig"))
+        self.assertTrue(bindings[0].rss_reader._keyword_match("frog"))
+        self.assertTrue(bindings[0].rss_reader._keyword_match("kw1"))
+        self.assertFalse(bindings[0].rss_reader._keyword_match("kw2"))
 
         self.assertEqual("http://feed_url2", bindings[1].rss_reader.feed_url)
         self.assertEqual(20, bindings[1].rss_reader.timeout)
-        self.assertTrue(bindings[1].rss_reader.accept_filter("cat"))
-        self.assertTrue(bindings[1].rss_reader.accept_filter("pig"))
-        self.assertTrue(bindings[1].rss_reader.accept_filter("frog"))
-        self.assertTrue(bindings[1].rss_reader.accept_filter("kw2"))
-        self.assertFalse(bindings[1].rss_reader.accept_filter("kw1"))
+        self.assertTrue(bindings[1].rss_reader._keyword_match("cat"))
+        self.assertTrue(bindings[1].rss_reader._keyword_match("pig"))
+        self.assertTrue(bindings[1].rss_reader._keyword_match("frog"))
+        self.assertTrue(bindings[1].rss_reader._keyword_match("kw2"))
+        self.assertFalse(bindings[1].rss_reader._keyword_match("kw1"))
 
         bindings[0].issue_creator.assert_called_once_with(
                 action=None,
@@ -124,9 +124,9 @@ class TestBinding(unittest.TestCase):
         self.issue_creator.create_issue.assert_has_calls(expected_calls)
 
     def test_reader_exception_logging(self):
-        self.binding.logger.error = mock.Mock()
+        self.binding.logger.exception = mock.Mock()
         self.reader.consecutive_failures = 1
         self.reader.get_entries.side_effect = RuntimeError("boom")
         self.binding.pump()
         expected_matcher = RegexMatcher("1 consecutive fail")
-        self.binding.logger.error.assert_called_once_with(expected_matcher)
+        self.binding.logger.exception.assert_called_once_with(expected_matcher)

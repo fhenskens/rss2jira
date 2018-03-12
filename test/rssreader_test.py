@@ -44,9 +44,9 @@ _FEED_XML = """
 class TestRssReader(unittest.TestCase):
     def setUp(self):
         self.input_file = tempfile.NamedTemporaryFile()
-        self.url = "file://{}".format(self.input_file.name)
         self.input_file.write(_FEED_XML)
         self.input_file.flush()
+        self.url = "file://{}".format(self.input_file.name)
 
     def test_reader(self):
         reader = RssReader(self.url)
@@ -66,7 +66,7 @@ class TestRssReader(unittest.TestCase):
         should_match = ["title XYZ", "description XYZ", "body XYZ", "XYZ"]
         for s in should_match:
             match_re = re.compile(s)
-            reader = RssReader(self.url, accept_filter=match_re.search)
+            reader = RssReader(self.url, keywords=match_re.search)
             entries = reader.get_entries()
             self.assertEqual(1, len(entries))
             self.assertEqual("title XYZ", entries[0].title)
