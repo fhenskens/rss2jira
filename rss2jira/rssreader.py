@@ -2,6 +2,8 @@ import feedparser
 import logging
 import urllib2
 import socket
+import re
+from reutil import remap
 
 def validate_feed(feed):
     # We're being a bit permissive; so long as the feed got entries we
@@ -16,9 +18,9 @@ def validate_feed(feed):
 
 
 class RssReader(object):
-    def __init__(self, feed_url, accept_filter=lambda x: True, timeout=None):
+    def __init__(self, feed_url, keywords, timeout=None):
         self.feed_url = feed_url
-        self.accept_filter = accept_filter
+        self.keywords = keywords
         self.logger = logging.getLogger("rss2jira")
         self.timeout = timeout
         self.consecutive_failures = 0
@@ -43,11 +45,28 @@ class RssReader(object):
         for e in self._fetch_all_entries():
             if not hasattr(e, 'title') or len(e.title) == 0:
                 e.title = 'No Title'
-
-            if self.accept_filter(str(e)):
+            if self._keyword_match(e):
+                self.logger.debug("Keyword matched.")
                 entries.append(e)
             else:
-                self.logger.debug('Entry does not match keywords, ' +
+                self.logger.info('Entry does not match keywords, ' +
                     'skipping ({})'.format(e.title.encode('ascii', 'replace')))
-
         return entries
+
+    def _keyword_match(self, feedEntry):
+        entryString = str(feedEntry)
+        plainStrings = []
+        for keywordEntry in self.keywords:
+            if isinstance(keywordEntry, str):
+                plainStrings.append(keywordEntry)
+        if len(plainStrings) > 0:
+            regex = "|".join(plainStrings)
+            self.logger.debug("Plain text match on: " + regex)
+            return re.compile(regex, re.IGNORECASE).search(entryString)
+        assignee = remap(entryString, self.keywords)
+        self.logger.debug("Remap result: " + str(assignee))
+        if assignee == None:
+            return False
+        else:
+            feedEntry.assignee = assignee
+            return True

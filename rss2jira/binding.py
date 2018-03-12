@@ -8,7 +8,7 @@ class BindingFactory(object):
             issue_creator_class):
 
         self.socket_timeout = config.get("socket_timeout_sec", None)
-        self.global_keywords = config.get("keywords", [])
+        self.keywords = config.get("keywords", [])
         self.tracked_entries = tracked_entries
         self.rss_reader_class = rss_reader_class
         self.issue_creator_class = issue_creator_class
@@ -22,17 +22,12 @@ class BindingFactory(object):
         self.action = config.get("action")
         self.email = config.get("email")
 
-    def make_filter(self, source_keywords):
-        keywords = set(self.global_keywords + source_keywords)
-        return re.compile("|".join(keywords), re.IGNORECASE).search
-
     def create(self, config_entry):
         name = config_entry['name']
 
-        accept_filter = self.make_filter(config_entry.get('keywords', []))
         rss_reader = self.rss_reader_class(
                 feed_url=config_entry['feed_url'],
-                accept_filter=accept_filter,
+                keywords=self.get_config(config_entry, 'keywords'),
                 timeout=self.socket_timeout)
 
         issue_creator = self.issue_creator_class(
@@ -66,7 +61,7 @@ class Binding(object):
         try:
             entries = self.rss_reader.get_entries()
         except Exception as ex:
-            self.logger.error("{} consecutive failure(s) fetching {}".format(
+            self.logger.exception("{} consecutive failure(s) fetching {}".format(
                     self.rss_reader.consecutive_failures, self.name))
             return
 

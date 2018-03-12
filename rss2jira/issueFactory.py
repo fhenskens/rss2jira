@@ -46,7 +46,7 @@ class JiraWrapper(object):
                     'summary': entry.title,
                     'description': "Go to {} ({}).".format(self.name, entry.link) + "\r\n\r\n" + self.action.result,
                     'issuetype': {'name': self.issuetypeName},
-                    'assignee': {'name': self.assignee}},
+                    'assignee': {'name': entry.assignee if hasattr(entry, "assignee") else self.assignee}},
                 **resolvedFields)
 
     def _resolve_action( self, entry ):

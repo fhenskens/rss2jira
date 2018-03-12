@@ -2,6 +2,9 @@ import logging
 import requests
 import re
 from bs4 import BeautifulSoup
+from datetime import datetime
+from datetime import date
+from reutil import remap
 
 class Action(object):
     def __init__(self, definition):
@@ -17,7 +20,11 @@ class Action(object):
         self.result = ""
         if not hasattr(self, "disabled"):
             self.definition = dict(self.definitionTemplate)
-            self._apply(data, self.definition)
+            try:
+                self._apply(data, self.definition)
+            except Exception as e:
+                self.logger.exception("Exception encountered processing action " + str(definition))
+                raise e
         return self.jiraData
 
     def _apply(self, data, definition):
@@ -37,7 +44,6 @@ class Action(object):
                 for exceptAction in definition["exceptActions"]:
                     self._apply(data, exceptAction)
             else:
-                self.logger.exception("Exception encountered processing action " + str(definition))
                 raise e
 
     def _update(self):
@@ -128,3 +134,12 @@ class Action(object):
 
     def _pass(self, data, definition):
         pass
+
+    def _now(self, data, definition):
+        return datetime.now()
+
+    def _today(self, data, definition):
+        return date.today()
+
+    def _remap(self, data, definition):
+        return remap(data, definition["map"])
