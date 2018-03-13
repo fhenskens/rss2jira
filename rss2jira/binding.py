@@ -8,7 +8,7 @@ class BindingFactory(object):
             issue_creator_class):
 
         self.socket_timeout = config.get("socket_timeout_sec", None)
-        self.keywords = config.get("keywords", [])
+        self.keywords = config.get("keywords", [".*"])
         self.tracked_entries = tracked_entries
         self.rss_reader_class = rss_reader_class
         self.issue_creator_class = issue_creator_class
@@ -25,9 +25,12 @@ class BindingFactory(object):
     def create(self, config_entry):
         name = config_entry['name']
 
+        config_keywords = config_entry["keywords"] if "keywords" in config_entry else []
+        logging.getLogger('rss2jira').debug("Keywords: {} + {} = {}".format(self.keywords, config_keywords, self.keywords + config_keywords))
+
         rss_reader = self.rss_reader_class(
                 feed_url=config_entry['feed_url'],
-                keywords=self.keywords + config_entry["keywords"] if "keywords" in config_entry else [],
+                keywords=self.keywords + config_keywords,
                 timeout=self.socket_timeout)
 
         issue_creator = self.issue_creator_class(

@@ -51,7 +51,7 @@ sources:
         outputActions:
         - type: resultAppend
       - type: re
-        find: .*Base[^\d]*([\d\.]+).*
+        find: ^.{0,25}Base[^\d]{0,25}([\d\.]+)
         group: 1
         default: "11"
         outputActions:
