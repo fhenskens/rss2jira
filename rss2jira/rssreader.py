@@ -50,8 +50,8 @@ class RssReader(object):
                 self.logger.debug("Keyword matched.")
                 entries.append(e)
             else:
-                self.logger.info('Entry does not match keywords {}, ' +
-                    'skipping ({})'.format(self.keywords, e.title.encode('ascii', 'replace')))
+                self.logger.info('Entry does not match keywords, ' +
+                    'skipping ({})'.format(e.title.encode('ascii', 'replace')))
         return entries
 
     def _keyword_match(self, feedEntry):
