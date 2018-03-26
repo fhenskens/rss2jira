@@ -38,7 +38,7 @@ class Action(object):
             for outputAction in definition["outputActions"]:
                 self._apply(output, outputAction)
         except Exception as e:
-            self.logger.exception("Exception caught in action: " + str(definition) + "\r\nException: {}".format(e))
+            # self.logger.exception("Exception caught in action: " + str(definition) + "\r\nException: {}".format(e))
             if "exceptActions" in definition:
                 self.logger.debug("Except action found.")
                 for exceptAction in definition["exceptActions"]:
@@ -50,13 +50,17 @@ class Action(object):
         self.logger.debug("Updating dictionaries. Variables: " + str(self.variables))
         for varKey, varVal in self.variables.items():
             p = re.compile("{{\s*" + varKey + "\s*}}")
+            self._replaceDeleteNone = True
             self._replaceDict(p, varVal, self.jiraData)
+            self._replaceDeleteNone = False
             self._replaceDict(p, varVal, self.definition)
 
     def _updateVal(self, var, val):
         self.logger.debug("Updating dictionaries. Variable: " + var + "=" + str(val))
         p = re.compile("{{\s*" + var + "\s*}}")
+        self._replaceDeleteNone = True
         self._replaceDict(p, val, self.jiraData)
+        self._replaceDeleteNone = False
         self._replaceDict(p, val, self.definition)
 
     def _replaceDict(self, p, replace, dictionary):
@@ -64,7 +68,11 @@ class Action(object):
             if p.match(key) is not None:
                 del dictionary[key]
                 key = p.sub(replace, key)
-            dictionary[key] = self._replaceType(p, replace, val)
+            replaced = self._replaceType(p, replace, val)
+            if key is not None and (replaced is not None or val is None):
+                dictionary[key] = replaced
+            elif replaced is None and val is not None and self._replaceDeleteNone:
+                del dictionary[key]
         return dictionary
 
     def _replaceType(self, p, replace, obj):
@@ -86,7 +94,11 @@ class Action(object):
 
     def _replaceList(self, p, replace, _list):
         for idx, item in enumerate(_list):
-            _list[idx] = self._replaceType(p, replace, item)
+            val = self._replaceType(p, replace, item)
+            if val is None:
+                del _list[idx]
+            else:
+                _list[idx] = self._replaceType(p, replace, item)
         return _list
 
     def _follow(self, data, definition):
@@ -111,7 +123,7 @@ class Action(object):
         return self.session.post(url, **definition['kwargs'])
 
     def _float(self, data, definition):
-        self.logger.debug("floating data: " + data)
+        self.logger.debug("floating data: " + str(data))
         return float(data)
 
     def _register(self, data, definition):
@@ -129,7 +141,7 @@ class Action(object):
         result = p.search(data)
         if result is None:
             if "default" in definition:
-                self.logger.debug("No result found. Returning default: " + definition["default"])
+                self.logger.debug("No result found. Returning default: " + str(definition["default"]))
                 return definition["default"]
             else:
                 self.logger.debug("No result found")

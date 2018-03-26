@@ -10,6 +10,7 @@ from rss2jira import Sqlite3TrackedEntries, BindingFactory, RssReader, MainLoop
 from rss2jira import JiraWrapper
 import smtplib
 from email.mime.text import MIMEText
+import traceback
 
 class StreamToLogger(object):
     """
@@ -105,7 +106,7 @@ def main():
             smtp = email["smtp"]
             mailFrom = email["from"]
             mailTo = email["to"]
-            sendMail(smtp, mailFrom, mailTo, "rss2jira encountered error", "Stack trace: \r\n\r\n{}".format(e))
+            sendMail(smtp, mailFrom, mailTo, "rss2jira encountered error", "Stack trace: \r\n\r\n{}".format(format_exception(e)))
         else:
             print "No email settings configured."
         raise e
@@ -121,6 +122,19 @@ def sendMail(smtp, mailFrom, mailTo, subject, body):
         s.quit()
     except Exception as e:
         pass
+
+def format_exception(e):
+    exception_list = traceback.format_stack()
+    exception_list = exception_list[:-2]
+    exception_list.extend(traceback.format_tb(sys.exc_info()[2]))
+    exception_list.extend(traceback.format_exception_only(sys.exc_info()[0], sys.exc_info()[1]))
+
+    exception_str = "Traceback (most recent call last):\n"
+    exception_str += "".join(exception_list)
+    # Removing the last \n
+    exception_str = exception_str[:-1]
+
+    return exception_str
 
 if __name__ == "__main__":
     main()
