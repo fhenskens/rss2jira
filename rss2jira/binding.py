@@ -19,7 +19,7 @@ class BindingFactory(object):
         self.jira_issuetypeName = config.get("jira_issuetypeName")
         self.jira_assignee = config.get("jira_assignee")
         self.jira_custom_fields = config.get("jira_custom_fields") if "jira_custom_fields" in config else dict()
-        self.action = config.get("action")
+        self.actions = config.get("actions")
         self.email = config.get("email")
 
     def create(self, config_entry):
@@ -42,7 +42,7 @@ class BindingFactory(object):
                 issuetypeName=self.get_config(config_entry, 'jira_issuetypeName'),
                 assignee=self.get_config(config_entry, 'jira_assignee'),
                 customFields=self.get_config(config_entry, 'jira_custom_fields'),
-                action=self.get_config(config_entry, 'action'))
+                actions=self.get_config(config_entry, 'actions'))
 
         storage = self.tracked_entries.source_view(name)
 

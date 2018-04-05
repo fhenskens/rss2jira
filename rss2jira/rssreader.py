@@ -55,7 +55,6 @@ class RssReader(object):
         return entries
 
     def _keyword_match(self, feedEntry):
-        entryString = str(feedEntry)
         plainStrings = []
         for keywordEntry in self.keywords:
             if isinstance(keywordEntry, str):
@@ -67,12 +66,12 @@ class RssReader(object):
         if len(plainStrings) > 0:
             regex = "|".join(plainStrings)
             self.logger.debug("Plain text match on: " + regex)
-            return re.compile(regex, re.IGNORECASE).search(entryString) is not None
+            return re.compile(regex, re.IGNORECASE).search(str(feedEntry)) is not None
         for idx, keyword in enumerate(self.keywords):
             if not isinstance(keyword, dict):
                 del self.keywords[idx]
-        assignee = remap(entryString, self.keywords)
-        self.logger.debug("Remap result: " + str(assignee))
+        assignee = remap(feedEntry.title, self.keywords)
+        self.logger.debug("Remap result for (" + feedEntry.title + "): " + str(assignee))
         if assignee == None:
             return False
         else:

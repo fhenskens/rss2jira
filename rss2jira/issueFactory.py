@@ -6,7 +6,7 @@ from action import Action
 
 class JiraWrapper(object):
 
-    def __init__(self, name, url, username, password, projectKey, issuetypeName, assignee, customFields, action):
+    def __init__(self, name, url, username, password, projectKey, issuetypeName, assignee, customFields, actions):
 
         self.name = name
         self.url = url
@@ -17,7 +17,7 @@ class JiraWrapper(object):
         self.logger = logging.getLogger("rss2jira")
         self.assignee = assignee
         self.customFields = customFields
-        self.action = Action( action )
+        self.action = Action( actions )
 
         self.options = {
             'server': url,
@@ -51,7 +51,7 @@ class JiraWrapper(object):
 
     def _resolve_action( self, entry ):
         try:
-            return self.action.apply( entry.link, self.customFields )
+            return self.action.apply( entry, self.customFields )
         except Exception as e:
             self.logger.exception( "Link : " + entry.link + ", with JIRA data: " + str(self.customFields) )
             raise e

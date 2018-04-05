@@ -7,24 +7,25 @@ from datetime import date
 from reutil import remap
 
 class Action(object):
-    def __init__(self, definition):
+    def __init__(self, definitions):
         self.logger = logging.getLogger('rss2jira')
-        if definition is None:
+        if definitions is None:
             self.disabled = True
             return
-        self.definitionTemplate = definition
+        self.definitionTemplates = definitions
 
     def apply(self, data, jiraData):
         self.jiraData = dict(jiraData)
         self.variables = dict()
         self.result = ""
         if not hasattr(self, "disabled"):
-            self.definition = dict(self.definitionTemplate)
-            try:
-                self._apply(data, self.definition)
-            except Exception as e:
-                self.logger.exception("Exception encountered processing action " + str(self.definition) + "\r\nException: {}".format(e))
-                raise e
+            self.definitions = list(self.definitionTemplates)
+            for definition in self.definitions:
+                try:
+                    self._apply(data, definition)
+                except Exception as e:
+                    self.logger.exception("Exception encountered processing action " + str(definition) + "\r\nException: {}".format(e))
+                    raise e
         return self.jiraData
 
     def _apply(self, data, definition):
@@ -53,7 +54,7 @@ class Action(object):
             self._replaceDeleteNone = True
             self._replaceDict(p, varVal, self.jiraData)
             self._replaceDeleteNone = False
-            self._replaceDict(p, varVal, self.definition)
+            self._replaceList(p, varVal, self.definitions)
 
     def _updateVal(self, var, val):
         self.logger.debug("Updating dictionaries. Variable: " + var + "=" + str(val))
@@ -61,7 +62,7 @@ class Action(object):
         self._replaceDeleteNone = True
         self._replaceDict(p, val, self.jiraData)
         self._replaceDeleteNone = False
-        self._replaceDict(p, val, self.definition)
+        self._replaceList(p, val, self.definitions)
 
     def _replaceDict(self, p, replace, dictionary):
         for key, val in dictionary.items():
@@ -138,6 +139,11 @@ class Action(object):
             return p.sub(definition["replace"], data)
         self.logger.debug("Performing regex search")
         p = re.compile(definition["find"])
+        if "each" in definition:
+            results = re.findall(p, data)
+            for action in definition["each"]:
+                for result in results:
+                    self._apply(self, result, action)
         result = p.search(data)
         if result is None:
             if "default" in definition:
@@ -172,3 +178,16 @@ class Action(object):
 
     def _remap(self, data, definition):
         return remap(data, definition["map"])
+
+    def _getattr(self, data, definition):
+        return getattr(data, definition["name"], definition["default"]) if "default" in definition else getattr(data, definition["name"])
+
+    def _set(self, data, definition):
+        if definition["name"] not in self.variables:
+            self.variables[defintion["name"]] = set()
+        self.variables[definition["name"]].add(data)
+
+    def _iter(self, data, definition):
+        if definition["name"] in self.variables:
+            for val in self.variables[definition["name"]]:
+                self.apply(self, val, definition["each"])
