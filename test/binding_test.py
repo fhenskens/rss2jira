@@ -73,7 +73,7 @@ class TestBindingFactory(unittest.TestCase):
         self.assertFalse(bindings[1].rss_reader._keyword_match("kw1"))
 
         bindings[0].issue_creator.assert_called_once_with(
-                action=None,
+                actions=None,
                 assignee=None,
                 customFields={},
                 username="jira_user1",
@@ -84,7 +84,7 @@ class TestBindingFactory(unittest.TestCase):
                 issuetypeName="jira_type1")
 
         bindings[1].issue_creator.assert_called_once_with(
-                action=None,
+                actions=None,
                 assignee=None,
                 customFields={},
                 username="jira_user2",
