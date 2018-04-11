@@ -41,6 +41,7 @@ class JiraWrapper(object):
 
     def _issue_dict(self, entry):
         resolvedFields = self._resolve_action( entry )
+        self.logger.debug("Title: " + entry.title + ": Resolved Fields: " + str(resolvedFields))
         return dict(
                 {'project': {'key': self.projectKey},
                     'summary': entry.title,

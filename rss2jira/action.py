@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
 from reutil import remap
+import copy
 
 class Action(object):
     def __init__(self, definitions):
@@ -15,11 +16,11 @@ class Action(object):
         self.definitionTemplates = definitions
 
     def apply(self, data, jiraData):
-        self.jiraData = dict(jiraData)
+        self.jiraData = copy.deepcopy(jiraData)
         self.variables = dict()
         self.result = ""
         if not hasattr(self, "disabled"):
-            self.definitions = list(self.definitionTemplates)
+            self.definitions = copy.deepcopy(self.definitionTemplates)
             for definition in self.definitions:
                 try:
                     self._apply(data, definition)
@@ -82,7 +83,7 @@ class Action(object):
         elif isinstance(obj, str):
             if len(p.sub("", obj)) < len(obj):
                 self.logger.debug("Replacing string: " + obj + ". Length of unaltered text: " + str(len(p.sub("", obj))))
-            if not isinstance(replace, str) and len(obj) > 0 and len(p.sub("", obj)) == 0:
+            if len(obj) > 0 and len(p.sub("", obj)) == 0:
                 return replace
             return p.sub(str(replace), obj)
         elif isinstance(obj, dict):
@@ -99,7 +100,10 @@ class Action(object):
             if val is None:
                 del _list[idx]
             else:
-                _list[idx] = self._replaceType(p, replace, item)
+                replaced = self._replaceType(p, replace, item)
+                if replaced != _list[idx]:
+                    self.logger.debug("Replaced list item " + _list[idx] + " with " + replaced)
+                    _list[idx] = replaced
         return _list
 
     def _follow(self, data, definition):
