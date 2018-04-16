@@ -18,6 +18,7 @@ class Action(object):
     def apply(self, data, jiraData):
         self.jiraData = copy.deepcopy(jiraData)
         self.variables = dict()
+        self.links = set()
         self.result = ""
         if not hasattr(self, "disabled"):
             self.definitions = copy.deepcopy(self.definitionTemplates)
@@ -42,7 +43,7 @@ class Action(object):
         except Exception as e:
             # self.logger.exception("Exception caught in action: " + str(definition) + "\r\nException: {}".format(e))
             if "exceptActions" in definition:
-                self.logger.debug("Except action found.")
+                self.logger.debug("Error in " + action+ ", except action found.")
                 for exceptAction in definition["exceptActions"]:
                     self._apply(data, exceptAction)
             else:
@@ -144,10 +145,12 @@ class Action(object):
         self.logger.debug("Performing regex search")
         p = re.compile(definition["find"])
         if "each" in definition:
+            self.logger.debug("Iterating over regex results")
             results = re.findall(p, data)
             for action in definition["each"]:
                 for result in results:
-                    self._apply(self, result, action)
+                    self.logger.debug("Action: " + str(action) + ",Result: " + result)
+                    self._apply(result, action)
         result = p.search(data)
         if result is None:
             if "default" in definition:
@@ -195,3 +198,6 @@ class Action(object):
         if definition["name"] in self.variables:
             for val in self.variables[definition["name"]]:
                 self.apply(self, val, definition["each"])
+
+    def _link(self, data, definition):
+        self.links.add(data)

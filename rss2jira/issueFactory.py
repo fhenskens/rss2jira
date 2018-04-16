@@ -60,9 +60,12 @@ class JiraWrapper(object):
     def create_issue(self, entry):
         fields = self._issue_dict(entry)
         try:
-            return self.jira.create_issue(fields=fields)
+            issue = self.jira.create_issue(fields=fields)
         except Exception as ex:
             self.logger.info("Caught exception while creating JIRA issue. " +
                 "Reauthenticating and trying again... %s", ex)
             self._authenticate()
-            return self.jira.create_issue(fields=fields)
+            issue = self.jira.create_issue(fields=fields)
+        for link in self.action.links:
+            self.jira.add_simple_link(self.jira.issue(issue), {"url":link, "title":link})
+        return issue
