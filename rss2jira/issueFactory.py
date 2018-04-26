@@ -67,5 +67,8 @@ class JiraWrapper(object):
             self._authenticate()
             issue = self.jira.create_issue(fields=fields)
         for link in self.action.links:
-            self.jira.add_simple_link(self.jira.issue(issue), {"url":link, "title":link})
+            try:
+                self.jira.add_simple_link(self.jira.issue(issue), {"url":link, "title":link})
+            except:
+                self.logger.exception(str(issue) + ": Exception: Could not link URL: " + link)
         return issue
