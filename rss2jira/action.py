@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import date
 from reutil import remap
 import copy
+import unicodedata
 
 class Action(object):
     def __init__(self, definitions):
@@ -110,8 +111,9 @@ class Action(object):
     def _follow(self, data, definition):
         if not hasattr(self, "session"):
             self.session = requests.Session()
-        self.logger.debug("Performing _{}".format(definition['method']))
-        output = self._getBody(getattr(self, '_{}'.format(definition['method']))(data, definition))
+        url = definition["url"] if "url" in definition else data
+        self.logger.debug("Performing _{}".format(definition['method']) + ": " + str(url))
+        output = self._getBody(getattr(self, '_{}'.format(definition['method']))(url, definition))
         return output
 
     def _getBody(self, response):
@@ -133,7 +135,7 @@ class Action(object):
         return float(data)
 
     def _register(self, data, definition):
-        val = definition["val"] if "val" in definition else data
+        val = definition["val"] if "val" in definition else unicodedata.normalize('NFKD', data).encode('ascii','ignore') if isinstance( data, unicode ) else data
         self.variables[definition["var"]] = val
         self._update()
 
@@ -151,6 +153,7 @@ class Action(object):
                 for result in results:
                     self.logger.debug("Action: " + str(action) + ",Result: " + result)
                     self._apply(result, action)
+            return None
         result = p.search(data)
         if result is None:
             if "default" in definition:
@@ -190,14 +193,17 @@ class Action(object):
         return getattr(data, definition["name"], definition["default"]) if "default" in definition else getattr(data, definition["name"])
 
     def _set(self, data, definition):
-        if definition["name"] not in self.variables:
-            self.variables[defintion["name"]] = set()
-        self.variables[definition["name"]].add(data)
+        name = definition["name"];
+        if name not in self.variables:
+            self.variables[name] = set()
+        self.variables[name].add(data)
 
     def _iter(self, data, definition):
-        if definition["name"] in self.variables:
-            for val in self.variables[definition["name"]]:
-                self.apply(self, val, definition["each"])
+        name = definition["name"]
+        if name in self.variables:
+            for val in self.variables[name]:
+                for action in definition["each"]:
+                    self._apply(val, action)
 
     def _link(self, data, definition):
         self.links.add(data)
