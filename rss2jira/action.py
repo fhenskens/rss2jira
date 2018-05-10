@@ -206,4 +206,4 @@ class Action(object):
                     self._apply(val, action)
 
     def _link(self, data, definition):
-        self.links.add(data)
+        self.links.add(re.sub("[\)>\"']", "", data))
