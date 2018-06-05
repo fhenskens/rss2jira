@@ -4,7 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
-from reutil import remap
+from reutil import remap, matches
 import copy
 import unicodedata
 
@@ -207,3 +207,13 @@ class Action(object):
 
     def _link(self, data, definition):
         self.links.add(re.sub("[\)>\"']", "", data))
+
+    def _filterLines(self, data, definition):
+        match = re.compile(definition["match"]) if "match" in definition else None
+        notMatch = re.compile(definition["notMatch"]) if "notMatch" in definition else None
+        lines = data.splitlines()
+        result = []
+        for line in lines:
+            if match is not None and match.search(line) or notMatch is not None and not notMatch.search(line):
+                result.append(line)
+        return "\r\n".join(result)
