@@ -18,3 +18,6 @@ build
 dist
 
 .*.sw[op]
+
+localTest.py
+localTest.yml

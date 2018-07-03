@@ -4,9 +4,10 @@ import re
 from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
-from reutil import remap, matches
+from reutil import remap
 import copy
 import unicodedata
+
 
 class Action(object):
     def __init__(self, definitions):
