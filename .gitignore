@@ -21,3 +21,5 @@ dist
 
 localTest.py
 localTest.yml
+*.log
+*.bak
