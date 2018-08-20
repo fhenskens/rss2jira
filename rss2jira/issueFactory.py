@@ -44,7 +44,7 @@ class JiraWrapper(object):
         self.logger.debug("Title: " + entry.title[:254] + ": Resolved Fields: " + str(resolvedFields))
         return dict(
                 {'project': {'key': self.projectKey},
-                    'summary': entry.title,
+                    'summary': entry.title[:254],
                     'description': "Go to {} ({}).".format(self.name, entry.link) + "\r\n\r\n" + self.action.result,
                     'issuetype': {'name': self.issuetypeName},
                     'assignee': {'name': entry.assignee if hasattr(entry, "assignee") else self.assignee}},
