@@ -173,7 +173,7 @@ class Action(object):
         soup = BeautifulSoup(data, "html.parser")
         #self.logger.debug("Soup: " + soup.prettify())
         self.logger.debug("Soup definition: " + str(definition))
-        return soup.find(definition["element"], **definition["kwargs"]).get_text()
+        return soup.find(definition["element"], **definition["kwargs"]).get_text() if "element" in definition else soup.get_text()
 
     def _str(self, data, definition):
         return str(data)
