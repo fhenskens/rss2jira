@@ -166,8 +166,9 @@ class Action(object):
         return result.group(definition["group"])
 
     def _resultAppend(self, data, definition):
-        self.logger.debug("Appending result: " + str(len(data)) + " characters")
-        self.result += data
+        output = definition["val"] if "val" in definition else data
+        self.logger.debug("Appending result: " + str(len(output)) + " characters")
+        self.result += output
 
     def _soup(self, data, definition):
         soup = BeautifulSoup(data, "html.parser")
@@ -217,4 +218,6 @@ class Action(object):
         for line in lines:
             if match is not None and match.search(line) or notMatch is not None and not notMatch.search(line):
                 result.append(line)
-        return "\r\n".join(result)
+        if not result:
+            return ""
+        return "\r\n".join(result) + "\r\n"
