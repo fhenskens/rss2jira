@@ -3,7 +3,7 @@ import logging
 import urllib2
 import socket
 import re
-from reutil import remap
+from rss2jira.reutil import remap
 
 def validate_feed(feed):
     # We're being a bit permissive; so long as the feed got entries we
@@ -27,7 +27,7 @@ class RssReader(object):
 
     def _fetch_all_entries(self):
         try:
-            print "connecting to: " + self.feed_url
+            print("connecting to: " + self.feed_url)
             request = urllib2.Request(self.feed_url)
             request.add_header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0")
             opener = urllib2.build_opener()

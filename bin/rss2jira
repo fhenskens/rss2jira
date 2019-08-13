@@ -108,7 +108,7 @@ def main():
             mailTo = email["to"]
             sendMail(smtp, mailFrom, mailTo, "rss2jira encountered error", "Stack trace: \r\n\r\n{}".format(format_exception(e)))
         else:
-            print "No email settings configured."
+            print("No email settings configured.")
         raise e
 
 def sendMail(smtp, mailFrom, mailTo, subject, body):

@@ -23,3 +23,5 @@ localTest.py
 localTest.yml
 *.log
 *.bak
+
+.vscode

@@ -1,10 +1,10 @@
 __version__ = '0.1.23'
 
-from trackedentries import Sqlite3TrackedEntries
-from binding import BindingFactory
-from rssreader import RssReader
-from app import MainLoop
-from issueFactory import JiraWrapper
+from rss2jira.trackedentries import Sqlite3TrackedEntries
+from rss2jira.binding import BindingFactory
+from rss2jira.rssreader import RssReader
+from rss2jira.app import MainLoop
+from rss2jira.issueFactory import JiraWrapper
 
 import logging
 

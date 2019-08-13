@@ -30,6 +30,12 @@ class Action(object):
                 except Exception as e:
                     self.logger.exception("Exception encountered processing action " + str(definition) + "\r\nException: {}".format(e))
                     raise e
+        self._replaceDeleteNone = True
+        self.logger.debug("Updating Jira Data. Variables: " + str(self.variables))
+        for varKey, varVal in self.variables.items():
+            p = re.compile("{{\s*" + varKey + "\s*}}")
+            self._replaceDict(p, varVal, self.jiraData)
+        self._replaceDeleteNone = False
         return self.jiraData
 
     def _apply(self, data, definition):
@@ -45,7 +51,7 @@ class Action(object):
         except Exception as e:
             # self.logger.exception("Exception caught in action: " + str(definition) + "\r\nException: {}".format(e))
             if "exceptActions" in definition:
-                self.logger.debug("Error in " + action+ ", except action found.")
+                self.logger.debug("Error in " + action+ ", except action found:" + str(e))
                 for exceptAction in definition["exceptActions"]:
                     self._apply(data, exceptAction)
             else:
@@ -55,18 +61,7 @@ class Action(object):
         self.logger.debug("Updating dictionaries. Variables: " + str(self.variables))
         for varKey, varVal in self.variables.items():
             p = re.compile("{{\s*" + varKey + "\s*}}")
-            self._replaceDeleteNone = True
-            self._replaceDict(p, varVal, self.jiraData)
-            self._replaceDeleteNone = False
             self._replaceList(p, varVal, self.definitions)
-
-    def _updateVal(self, var, val):
-        self.logger.debug("Updating dictionaries. Variable: " + var + "=" + str(val))
-        p = re.compile("{{\s*" + var + "\s*}}")
-        self._replaceDeleteNone = True
-        self._replaceDict(p, val, self.jiraData)
-        self._replaceDeleteNone = False
-        self._replaceList(p, val, self.definitions)
 
     def _replaceDict(self, p, replace, dictionary):
         for key, val in dictionary.items():
@@ -141,19 +136,31 @@ class Action(object):
         self._update()
 
     def _re(self, data, definition):
+        rex = definition["find"]
+        if "vars" in definition:
+            for i in range(len(definition["vars"])):
+                rex = rex.replace('\\' + str(i), self.variables[definition["vars"][i]] )
         if "replace" in definition:
-            p = re.compile(definition["find"], re.DOTALL)
+            p = re.compile(rex, re.DOTALL)
             self.logger.debug("Performing regex replace")
             return p.sub(definition["replace"], data)
         self.logger.debug("Performing regex search")
-        p = re.compile(definition["find"])
+        p = re.compile(rex)
         if "each" in definition:
-            self.logger.debug("Iterating over regex results")
             results = re.findall(p, data)
-            for action in definition["each"]:
-                for result in results:
-                    self.logger.debug("Action: " + str(action) + ",Result: " + result)
-                    self._apply(result, action)
+            try:
+                for action in definition["each"]:
+                    for result in results:
+                        self.logger.debug("Action: " + str(action) + ",Result: " + unicode(result))
+                        self._apply(result, action)
+            except Exception as e:
+                # self.logger.exception("Exception caught in action: " + str(definition) + "\r\nException: {}".format(e))
+                if "exceptActions" in definition:
+                    self.logger.debug("Error in " + action+ ", except action found:" + str(e))
+                    for exceptAction in definition["exceptActions"]:
+                        self._apply(data, exceptAction)
+                else:
+                    raise e
             return None
         result = p.search(data)
         if result is None:
@@ -195,10 +202,16 @@ class Action(object):
         return getattr(data, definition["name"], definition["default"]) if "default" in definition else getattr(data, definition["name"])
 
     def _set(self, data, definition):
-        name = definition["name"];
+        name = definition["name"]
         if name not in self.variables:
             self.variables[name] = set()
         self.variables[name].add(data)
+
+    def _load(self, data, definition):
+        name = definition["name"]
+        if name in self.variables:
+            return self.variables[name]
+        return None
 
     def _iter(self, data, definition):
         name = definition["name"]
@@ -208,7 +221,7 @@ class Action(object):
                     self._apply(val, action)
 
     def _link(self, data, definition):
-        self.links.add(re.sub("[\)>\"']", "", data))
+        self.links.add(re.sub("[\\)>\"']", "", data))
 
     def _filterLines(self, data, definition):
         match = re.compile(definition["match"]) if "match" in definition else None
@@ -221,3 +234,16 @@ class Action(object):
         if not result:
             return ""
         return "\r\n".join(result) + "\r\n"
+
+    def _max(self, data, definition):
+        variables = definition["vars"]
+        index = definition["index"]
+        name = variables[index]
+        val = float(unicode(data[index]))
+        if name not in self.variables or self.variables[name] < val:
+            self.variables[name] = val
+            for i in range(len(definition["vars"])):
+                if i != index:
+                    self.variables[variables[i]] = data[i]
+        self.logger.debug("Found Max Value. Variables: " + str(self.variables))
+        return self.variables[name]

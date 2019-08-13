@@ -1,6 +1,6 @@
 import re
 import logging
-from rssreader import RssReader
+from rss2jira.rssreader import RssReader
 import json
 
 class BindingFactory(object):
