@@ -244,6 +244,6 @@ class Action(object):
             self.variables[name] = val
             for i in range(len(definition["vars"])):
                 if i != index:
-                    self.variables[variables[i]] = data[i]
+                    self.variables[variables[i]] = str(data[i])
         self.logger.debug("Found Max Value. Variables: " + str(self.variables))
         return self.variables[name]
